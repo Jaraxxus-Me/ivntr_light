@@ -6,9 +6,10 @@ import shutil
 import types
 from pathlib import Path
 
-import pytest
-
 from skill_refactor import register_all_environments
+from skill_refactor.benchmarks.blocked_stacking.blocked_stacking import (
+    BlockedStackingRLTAMPSystem,
+)
 from skill_refactor.approaches.pure_tamp import PureTAMPApproach
 from skill_refactor.approaches.operator_learner import learn_operator_from_data
 from skill_refactor.args import reset_config
@@ -24,27 +25,22 @@ def _collect_blocked_stacking_test_data(save_path: Path, num_episodes: int = 3) 
     test_config = {
         "num_envs": 1,
         "debug_env": False,
-        "max_rl_steps": 10,
-        "rl_static_steps": 1,
         "max_env_steps": 100,
         "num_train_episodes_planner": num_episodes,
-        "obstruction_blocking_grasp_prob": 0.0,
-        "obstruction_blocking_stacking_prob": 0.0,
-        "lll_config": "config/lifelong_learning/blocked_stacking_sc1.yaml",
         "control_mode": "pd_joint_delta_pos",
     }
     register_all_environments()
     reset_config(test_config)
 
-    tamp_system = BlockedStackingRLTAMPSystem.create_default(  # type: ignore[name-defined]
+    tamp_system = BlockedStackingRLTAMPSystem.create_default(
         render_mode="rgb_array", seed=42
     )
 
-    approach = PureTAMPApproach(tamp_system, seed=42)  # type: ignore[name-defined]
+    approach = PureTAMPApproach(tamp_system, seed=42)
 
     # Collect minimal data directly without wrapper
-    train_data = approach.collect_planner_data(tamp_system.env, None)  # type: ignore[attr-defined]
-    tamp_system.env.close()  # type: ignore
+    train_data = approach.collect_data(tamp_system.env)
+    tamp_system.env.close()
 
     # Save to temporary location
     save_path.mkdir(parents=True, exist_ok=True)
@@ -86,8 +82,8 @@ def test_op_learning_blocked_stacking() -> None:
         # ReachToGrasp, Grasp, ReachToPlace, Place
         expected_num_ops = len(given_operators)
         assert (
-            len(given_operators) >= 2
-        ), "There should be at least 2 appearing operators in the dataset."
+            len(given_operators) == 4
+        ), "Should have 4 given operators in BlockedStacking."
 
         trajectories = planner_dataset.trajectories
         ground_atom_dataset, tasks = planner_dataset.get_ground_atoms_and_tasks(

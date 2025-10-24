@@ -47,18 +47,20 @@ pytest -s -v tests/utils/test_task_planning.py
 
 #### Environment and Data Collection
 ```py
+# Understand the environment
+pytest -s -v tests/benchmarks/test_blockedstacking_env.py
 # How a task-then-motion planner works in (batched) gym.Env
 pytest -s -v tests/approaches/test_pure_tamp.py
-# How to collect trajectoris with the planner in (batched) gym.Env
+# TODO: How to collect trajectoris with the planner in (batched) gym.Env
 pytest -s -v tests/datasets/test_collect.py
 ```
 
 #### Operator and Predicate Learning
 ```py
-# How to learn operators with given predicates
+# TODO: How to learn operators with given predicates
 pytest -s -v tests/approaches/test_op_learning.py
-# How to learn predicates by enumerating their effects across operators
+# TODO: How to learn predicates by enumerating their effects across operators
 pytest -s -v tests/approaches/test_pred_learning_topdown.py
-# How to learn predicates by bilevel learning the effects and classifiers (not tested, might not be faster in this domain)
+# TODO: How to learn predicates by bilevel learning the effects and classifiers (not tested, might not be faster in this domain)
 pytest -s -v tests/approaches/test_pred_learning_bilevel.py
 ```

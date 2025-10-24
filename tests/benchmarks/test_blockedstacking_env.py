@@ -13,11 +13,6 @@ from skill_refactor.settings import CFG
 
 def test_blocked_stacking_env_blocked():
     """Test basic functionality of BlockedStacking environment with obstructions."""
-    test_config = {
-        "obstruction_blocking_grasp_prob": 0.0,
-        "obstruction_blocking_stacking_prob": 0.0,
-    }
-    reset_config(test_config)
     register_all_environments()
 
     env = gym.make("skill_ref/BlockedStacking2D-v0")
@@ -35,12 +30,6 @@ def test_blocked_stacking_env_blocked():
 
 def test_parallel_blocked_stacking():
     """Test MultiEnvWrapper with BlockedStacking environments."""
-    test_config = {
-        "obstruction_blocking_grasp_prob": 0.0,
-        "obstruction_blocking_stacking_prob": 0.0,
-        "num_envs": 16,
-    }
-    reset_config(test_config)
     register_all_environments()
 
     # Create environment factory function
@@ -91,13 +80,6 @@ def test_parallel_blocked_stacking_tensor():
     """Test MultiEnvWrapper with torch tensor support."""
 
     # Create environment factory function
-    test_config = {
-        "obstruction_blocking_grasp_prob": 0.0,
-        "obstruction_blocking_stacking_prob": 0.0,
-        "num_envs": 16,
-        "device": "cuda:0",
-    }
-    reset_config(test_config)
     register_all_environments()
 
     def env_fn():
