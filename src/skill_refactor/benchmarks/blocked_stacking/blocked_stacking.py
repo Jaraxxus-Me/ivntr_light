@@ -498,7 +498,7 @@ class ReachToGraspSkill(BaseBlockedStackingSkill):
 
         Using ReadyGrasp predicate logic.
         """
-        assert len(objects) == 3
+        assert len(objects) == 2
         assert objects[0].name == "robot"
         assert objects[1].name in ["grasp_block", "base_block"]
         robot_pos = extract_robot_pose(obs)[:, 0:2]
@@ -507,8 +507,8 @@ class ReachToGraspSkill(BaseBlockedStackingSkill):
         distance_x = torch.abs(robot_pos[:, 0] - target_obj_pos[:, 0])
         distance_y = torch.abs(robot_pos[:, 1] - target_obj_pos[:, 1])
         holding = torch.logical_or(
-            obs[:, 27].to(torch.bool),
-            obs[:, 42].to(torch.bool),
+            obs[:, 14].to(torch.bool),
+            obs[:, 29].to(torch.bool),
         )  # bool tensor (NUM_ENVS,)
         dy_max = (
             target_obj_shape[:, 1] / 2
@@ -620,9 +620,9 @@ class ReachToPlaceSkill(ReachToGraspSkill):
         distance_x = torch.abs(target_obj1_pos[:, 0] - target_obj2_pos[:, 0])
         distance_y = target_obj1_pos[:, 1] - target_obj2_pos[:, 1]
         holding = (
-            obs[:, 27].to(torch.bool)
+            obs[:, 14].to(torch.bool)
             if objects[1].name == "grasp_block"
-            else obs[:, 42].to(torch.bool)
+            else obs[:, 29].to(torch.bool)
         )  # bool tensor (NUM_ENVS,)
         dy_max = (
             target_obj2_shape[:, 1] / 2
@@ -684,9 +684,9 @@ class GraspSkill(BaseBlockedStackingSkill):
         assert objects[0].name == "robot"
         assert objects[1].name in ["grasp_block", "base_block"]
         holding = (
-            obs[:, 27].to(torch.bool)
+            obs[:, 14].to(torch.bool)
             if objects[1].name == "grasp_block"
-            else obs[:, 42].to(torch.bool)
+            else obs[:, 29].to(torch.bool)
         )  # bool tensor (NUM_ENVS,)
         assert self._current_plan is not None
         not_have_current_plan = len(self._current_plan) == 0
@@ -888,8 +888,8 @@ class BlockedStackingPerceiver(Perceiver):
             obj_position_stacked[:, :, 0, 1] - obj_position_stacked[:, :, 1, 1]
         )
         holding = torch.logical_or(
-            obs[:, 27].to(torch.bool),
-            obs[:, 42].to(torch.bool),
+            obs[:, 14].to(torch.bool),
+            obs[:, 29].to(torch.bool),
         )  # bool tensor (NUM_ENVS,)
         holding = holding.unsqueeze(1).repeat(
             1, obj_position_stacked.shape[1]
@@ -925,9 +925,9 @@ class BlockedStackingPerceiver(Perceiver):
             obj2_shapes.append(obj2_shape)
             obj_positions.append(torch.stack([obj1_p, obj2_p], dim=1))
             if obj_pair[1].name == "grasp_block":
-                holding_obj1.append(obs[:, 27].to(torch.bool))
+                holding_obj1.append(obs[:, 14].to(torch.bool))
             elif obj_pair[1].name == "base_block":
-                holding_obj1.append(obs[:, 42].to(torch.bool))
+                holding_obj1.append(obs[:, 29].to(torch.bool))
             else:
                 holding_obj1.append(
                     torch.zeros((obs.shape[0],), dtype=torch.bool, device=obs.device)
@@ -982,9 +982,9 @@ class BlockedStackingPerceiver(Perceiver):
             obj0_shapes.append(obj0_shape)
             obj1_shapes.append(obj1_shape)
             if obj_pair[0].name == "grasp_block":
-                holding_obj0.append(obs[:, 27].to(torch.bool))
+                holding_obj0.append(obs[:, 14].to(torch.bool))
             elif obj_pair[0].name == "base_block":
-                holding_obj0.append(obs[:, 42].to(torch.bool))
+                holding_obj0.append(obs[:, 29].to(torch.bool))
             else:
                 holding_obj0.append(
                     torch.zeros((obs.shape[0],), dtype=torch.bool, device=obs.device)
@@ -1021,9 +1021,9 @@ class BlockedStackingPerceiver(Perceiver):
         holding_obj1 = []
         for obj_pair in objects:
             if obj_pair[1].name == "grasp_block":
-                holding_obj1.append(obs[:, 27].to(torch.bool))
+                holding_obj1.append(obs[:, 14].to(torch.bool))
             elif obj_pair[1].name == "base_block":
-                holding_obj1.append(obs[:, 42].to(torch.bool))
+                holding_obj1.append(obs[:, 29].to(torch.bool))
             else:
                 holding_obj1.append(
                     torch.zeros((obs.shape[0],), dtype=torch.bool, device=obs.device)
