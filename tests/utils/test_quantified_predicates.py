@@ -20,11 +20,7 @@ from skill_refactor.benchmarks.blocked_stacking.blocked_stacking import (
 def test_create_quantified_predicate_hand_defined() -> None:
     """Test quantified predicate creation with hand-defined predicates."""
     # Configure and create TAMP system
-    test_config = {
-        "obstruction_blocking_grasp_prob": 0.0,
-        "obstruction_blocking_stacking_prob": 0.0,
-    }
-    reset_config(test_config)
+    reset_config({})
     register_all_environments()
 
     # Create TAMP system
@@ -97,11 +93,7 @@ def test_create_quantified_predicate_hand_defined() -> None:
 def test_create_quantified_predicate_neural() -> None:
     """Test quantified predicate creation with neural predicates."""
     # Configure and create TAMP system
-    test_config = {
-        "obstruction_blocking_grasp_prob": 0.0,
-        "obstruction_blocking_stacking_prob": 0.0,
-    }
-    reset_config(test_config)
+    reset_config({})
     register_all_environments()
 
     # Create TAMP system
@@ -112,12 +104,10 @@ def test_create_quantified_predicate_neural() -> None:
     # Get types
     robot_type = tamp_system.components.type_container.as_dict()["robot"]
     block_type = tamp_system.components.type_container.as_dict()["block"]
-    obstruction_rec_type = tamp_system.components.type_container.as_dict()[
-        "obstruction_rec"
-    ]
 
-    # Create a ternary predicate Close(robot, block, obstruction_rec)
-    close_predicate = Predicate("Close", [robot_type, block_type, obstruction_rec_type])
+    # Create a ternary predicate Close(robot, block, block)
+    # Using three arguments to test quantification over middle variables
+    close_predicate = Predicate("Close", [robot_type, block_type, block_type])
 
     # Create a simple neural network that returns constant values
     class ConstantNet(torch.nn.Module):
@@ -162,48 +152,44 @@ def test_create_quantified_predicate_neural() -> None:
 
     assert forall_true_pred.name == "ForAll_block_1_Close"
     assert forall_true_pred.arity == 2
-    assert forall_true_pred.types == [robot_type, obstruction_rec_type]
+    assert forall_true_pred.types == [robot_type, block_type]
 
-    # Test Exist quantification over first variable (robot) with False base
+    # Test Exist quantification over last variable (block) with False base
     exist_false_pred, exist_false_interp = create_quantified_predicate(
-        close_predicate, false_interpreter, tamp_system, "Exist", 0
+        close_predicate, false_interpreter, tamp_system, "Exist", 2
     )
 
-    assert exist_false_pred.name == "Exist_robot_0_Close"
+    assert exist_false_pred.name == "Exist_block_2_Close"
     assert exist_false_pred.arity == 2
-    assert exist_false_pred.types == [block_type, obstruction_rec_type]
+    assert exist_false_pred.types == [robot_type, block_type]
 
     # Test interpreter execution
     obs = torch.randn(3, 100)  # batch_size=3, obs_dim=100
 
-    # For ForAll over block (True base), provide robot-obstruction pairs
+    # For ForAll over middle block, provide robot-block pairs
     robot_obj = tamp_system.perceiver.objects["robot"]
-    obstruction_obj = tamp_system.perceiver.objects["obstruction_rec"]
-    forall_objects: List[Sequence[Object]] = [[robot_obj, obstruction_obj]]
+    base_block_obj = tamp_system.perceiver.objects["base_block"]
+    forall_objects: List[Sequence[Object]] = [[robot_obj, base_block_obj]]
 
     forall_result = forall_true_interp(obs, forall_objects)
     assert forall_result.shape == (3, 1)
     # Since base returns True for all blocks, ForAll should be True
     assert torch.all(forall_result)
 
-    # For Exist over robot (False base), provide block-obstruction pairs
-    block_obj = tamp_system.perceiver.objects["grasp_block"]
-    exist_objects: List[Sequence[Object]] = [[block_obj, obstruction_obj]]
+    # For Exist over last block (False base), provide robot-block pairs
+    grasp_block_obj = tamp_system.perceiver.objects["grasp_block"]
+    exist_objects: List[Sequence[Object]] = [[robot_obj, grasp_block_obj]]
 
     exist_result = exist_false_interp(obs, exist_objects)
     assert exist_result.shape == (3, 1)
-    # Since base returns False for all robots, Exist should be False
+    # Since base returns False for all blocks, Exist should be False
     assert torch.all(~exist_result)
 
 
 def test_quantified_predicate_edge_cases() -> None:
     """Test edge cases for quantified predicates."""
     # Configure and create TAMP system
-    test_config = {
-        "obstruction_blocking_grasp_prob": 0.0,
-        "obstruction_blocking_stacking_prob": 0.0,
-    }
-    reset_config(test_config)
+    reset_config({})
     register_all_environments()
 
     # Create TAMP system
@@ -259,11 +245,7 @@ def test_quantified_predicate_edge_cases() -> None:
 def test_quantified_predicate_different_base_results() -> None:
     """Test quantifiers with mixed True/False base results."""
     # Configure and create TAMP system
-    test_config = {
-        "obstruction_blocking_grasp_prob": 0.0,
-        "obstruction_blocking_stacking_prob": 0.0,
-    }
-    reset_config(test_config)
+    reset_config({})
     register_all_environments()
 
     # Create TAMP system
