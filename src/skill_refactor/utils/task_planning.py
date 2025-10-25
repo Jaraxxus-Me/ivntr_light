@@ -55,7 +55,7 @@ class _TaskPlanningHeuristic:
 # Helper functions for entity combinations, var bindings and ground atoms
 # for abstract planning.
 def get_object_combinations(
-    objects: Collection[Object], types: Sequence[Type]
+    objects: Collection[Object], types: Sequence[Type], skip_self: bool = False
 ) -> Iterator[List[Object]]:
     """Get all combinations of objects satisfying the given types sequence."""
     sorted_entities = sorted(objects)
@@ -67,6 +67,8 @@ def get_object_combinations(
                 this_choices.append(ent)
         choices.append(this_choices)
     for choice in itertools.product(*choices):
+        if skip_self and len(choice) != len(set(choice)):
+            continue
         yield list(choice)
 
 

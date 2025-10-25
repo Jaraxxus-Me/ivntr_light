@@ -846,6 +846,7 @@ class BlockedStackingPerceiver(Perceiver):
             for args in get_object_combinations(
                 self.objects.as_set(),
                 predicate.types,
+                skip_self=True,
             ):
                 input_args.append(args)
             # args: List[List[Object]] of length num_grounding

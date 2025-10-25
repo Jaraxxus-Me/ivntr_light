@@ -8,7 +8,7 @@ also homogeneous, i.e., the same skill is executed in all environments at all ti
 """
 
 import abc
-from typing import Any, List, Tuple, cast, Set
+from typing import Any, Tuple, Set
 import copy
 
 import torch
@@ -19,13 +19,18 @@ from relational_structs import (
     Predicate,
     Type,
 )
-from relational_structs.utils import parse_pddl_plan
-from tomsutils.pddl_planning import run_pddl_planner
 from torch import Tensor
 
 from skill_refactor.settings import CFG
 from skill_refactor.utils.controllers import get_frozen_action
+from skill_refactor.utils.task_planning import (
+    task_plan_grounding,
+    create_task_planning_heuristic,
+    task_plan,
+)
 from skill_refactor.utils.structs import (
+    Object,
+    GroundAtom,
     GroundOperator,
     LiftedOperator,
     LiftedOperatorSkill,
@@ -81,27 +86,13 @@ class TaskThenMotionPlanner(abc.ABC):
         # We commit to the first environment for planning.
         # This is a limitation of the current implementation.
         objects, atoms, goal = self.perceiver.reset(obs[0:1], info)
-        self._current_problem = PDDLProblem(
-            self._domain_name, self._domain_name, objects, atoms, goal
-        )
-        plan_str = run_pddl_planner(
-            str(self._domain), str(self._current_problem), planner=self._planner_id
-        )
+        self._current_task_plan = self._create_task_plan(objects, atoms, goal)
         self._last_action = (
             torch.tensor(self._fallback_action)
             .unsqueeze(0)
             .repeat(obs.shape[0], 1)
             .to(obs.device)
         )
-        if plan_str is None:
-            # will freeze at default fall back action
-            self._current_task_plan = []
-            self._current_operator = None
-            self._current_skill = None
-            return
-        parsed_plan = parse_pddl_plan(plan_str, self._domain, self._current_problem)
-        # Cast to our GroundOperator type (compatible due to inheritance)
-        self._current_task_plan = cast(List[GroundOperator], parsed_plan)
         self._current_operator = None
         self._current_skill = None
         # If some environments reach desired effects early, freeze them.
@@ -211,8 +202,48 @@ class TaskThenMotionPlanner(abc.ABC):
         self.operators = copy.deepcopy(new_operators)
         self.skills = copy.deepcopy(new_skills)
         self._domain = PDDLDomain(
-            f"Domain_Scenario_{self.curr_learning_phase}",
+            "Learned_Domain",
             self.operators,  # type: ignore[arg-type]
             self.perceiver.predicates_container.as_set(),
             self._types,
         )
+
+    def _create_task_plan(
+        self,
+        objects: set[Object],
+        init_atoms: set[GroundAtom],
+        goal: set[GroundAtom],
+    ) -> list[GroundOperator]:
+        """Create task plan with local search to achieve goal."""
+        ground_operators, reachable_atoms = task_plan_grounding(
+            init_atoms, objects, list(self.operators), allow_noops=True
+        )
+        heuristic = create_task_planning_heuristic(
+            CFG.sesame_task_planning_heuristic,
+            init_atoms,
+            goal,
+            ground_operators,
+            self.perceiver.predicates_container.as_set(),
+            objects,
+        )
+        generator = task_plan(
+            init_atoms,
+            goal,
+            ground_operators,
+            reachable_atoms,
+            heuristic,
+            CFG.seed,
+            100,
+            CFG.pred_search_max_skeletons_optimized,
+        )
+        # plan_str = run_pddl_planner(
+        #     str(self.domain), str(problem), planner=self.planner_id
+        # )
+        # if plan_str is None:
+        #     raise TaskThenMotionPlanningFailure("No plan found")
+        result = next(generator, None)
+        # NOTE: we only commit to the first plan
+        if result is None:
+            raise TaskThenMotionPlanningFailure("No plan found")
+        first_plan, _, _ = result
+        return first_plan  # type: ignore[return-value]

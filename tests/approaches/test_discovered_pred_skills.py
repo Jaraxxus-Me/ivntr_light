@@ -1,5 +1,7 @@
 """Unit Tests for the Lifelong Refactoring Approach, in Cluttered Table environment."""
 
+import os
+import pytest
 import copy
 import logging
 import types
@@ -10,6 +12,7 @@ import torch
 import yaml
 
 from skill_refactor import register_all_environments
+from skill_refactor.approaches.pure_tamp import PureTAMPApproach
 from skill_refactor.approaches.pred_learner.topdown_learner import (
     TopDownPredicateLearner,
 )
@@ -27,17 +30,21 @@ from skill_refactor.utils.structs import (
 from skill_refactor.utils.ttmp import TaskThenMotionPlanner
 
 
-# @pytest.mark.skip(reason="The script requires local data")
-def test_loading_learned_skill_predicate_blocked_stacking_sc1_or_sc2():
+@pytest.mark.skipif(
+    not os.path.exists("top_down_pred_nets"),
+    reason="predicate nets not found",
+)
+def test_loading_learned_predicates_blocked_stacking():
     """Test RL Planning Wrapper with BlockedStacking environment."""
     test_config = {
         "num_envs": 1,
         "debug_env": False,
         "num_eval_episodes": 10,
         "traj_segmenter": "operator_changes",
-        "predicate_config": f"config/predicates/blocked_stacking_confined_enu_sc2_place.yaml",
-        "log_file": f"test_loaded_predicates.log",
-        "pred_net_save_dir": f"1020_sc2_pred_nets_place",
+        "predicate_config": "config/predicates/blocked_stacking_enu.yaml",
+        "log_file": "test_learned_predicates.log",
+        "pred_net_save_dir": "top_down_pred_nets",
+        "middle_state_method": "naive_init",
         "force_skip_pred_learning": True,
         "loglevel": logging.INFO,
         "control_mode": "pd_joint_delta_pos",
@@ -65,13 +72,25 @@ def test_loading_learned_skill_predicate_blocked_stacking_sc1_or_sc2():
         tamp_system.env, CFG.control_mode
     )
 
-    # Create planner using environment's components
+    # Create planner with partial predicates
+    given_predicate_names = ["On"]
+    given_predicate_set = set()
+    for pred in list(tamp_system.predicates):
+        if pred.name in given_predicate_names:
+            given_predicate_set.add(pred)
+    partial_perceiver = copy.deepcopy(tamp_system.perceiver)
+    all_predicate_interp = copy.deepcopy(partial_perceiver.predicate_interpreters)
+    # Delete all predicates that are not given
+    for pred in list(all_predicate_interp.keys()):
+        if pred not in given_predicate_set:
+            partial_perceiver.delete_predicate_interpreter(pred)
+
     planner = TaskThenMotionPlanner(
         types=tamp_system.types,
-        predicates=tamp_system.predicates,
-        perceiver=tamp_system.perceiver,
-        operators=tamp_system.operators,
-        skills=tamp_system.skills,
+        predicates=given_predicate_set, # use partial predicate set
+        perceiver=partial_perceiver, # use partial predicate set
+        operators=set(), # will be updated later
+        skills=set(), # will be updated later
         fallback_action=fall_back_action,
         normalize_action=normalize_action,
         arm_action_low=arm_action_low,
@@ -91,6 +110,7 @@ def test_loading_learned_skill_predicate_blocked_stacking_sc1_or_sc2():
         dataset=planner_dataset,
         tamp_system=tamp_system,
         predicate_configures=predicate_configures,
+        given_predicates=given_predicate_set,
         verbose=True,
     )
 
@@ -101,7 +121,7 @@ def test_loading_learned_skill_predicate_blocked_stacking_sc1_or_sc2():
         type_list = pred.types
         planner.perceiver.add_predicate_interpreter(pred.name, type_list, interp)
 
-    skills = copy.deepcopy(planner.skills)
+    skills = copy.deepcopy(tamp_system.skills)
     skill_operator_names = [skill.get_operator_name() for skill in skills]
     for operator in op_set:
         # Note that all operators will be binded to the skills
@@ -140,13 +160,12 @@ def test_loading_learned_skill_predicate_blocked_stacking_sc1_or_sc2():
     planner.update_domain(op_set, skills)
 
     # Now test the approach with the latest planner
-    # rewards, lengths, successes = run_evaluation_episode(
-    #     tamp_system,
-    #     approach,
-    #     total_episodes=10,
-    # )
-
     # Use Training states if necessary
+    approach = PureTAMPApproach(
+        tamp_system,
+        seed=0,
+        planner=planner,
+    )
     video_folder = Path(f"videos/planning_learned_predicates")
     envs = MultiEnvRecordVideo(
         tamp_system.env,
@@ -155,17 +174,18 @@ def test_loading_learned_skill_predicate_blocked_stacking_sc1_or_sc2():
     )
     # envs = tamp_system.env
     success = []
-    for epi in range(101, 110):
+    for epi in range(0, 10):
         traj_init_state = torch.stack(
             [planner_dataset.trajectories[epi].states[0]],
             dim=0,
         ).to(envs.device)
 
+        # Use training initial states
         reset_options = {"init_state": traj_init_state}
+        # Use env rnd seed
         # reset_options = {}
         obs, info = envs.reset(options=reset_options)
-        obs, info = envs.reset(options=reset_options)
-        step_result = planner.reset(obs, info)
+        step_result = approach.reset(obs, info)
         total_reward = torch.tensor(
             [0.0] * CFG.num_envs, dtype=torch.float32, device=envs.device
         )
@@ -190,7 +210,7 @@ def test_loading_learned_skill_predicate_blocked_stacking_sc1_or_sc2():
                 epi_success = True
                 success.append(1)
                 logging.info(f"Episode {epi} succeeded at step {step}.")
-            step_result = planner.step(obs, total_reward, False, False, info)
+            step_result = approach.step(obs, total_reward, False, False, info)
         if not info["success"].all():
             success.append(0)
             logging.info(f"Episode {epi} failed.")

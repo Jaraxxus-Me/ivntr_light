@@ -409,10 +409,10 @@ def test_fixed_predicate_invention_blocked_stacking_middle():
     test_config = {
         "traj_segmenter": "operator_changes",
         "predicate_config": "config/predicates/blocked_stacking_enu.yaml",
-        "log_file": "top_down_pred_learning.log",
+        "log_file": "top_down_pred_learning_search.log",
         "pred_net_save_dir": "top_down_pred_nets",
         "middle_state_method": "naive_init",
-        "force_skip_pred_learning": False,
+        "force_skip_pred_learning": True,
         "loglevel": logging.INFO,
     }
     reset_config(test_config)

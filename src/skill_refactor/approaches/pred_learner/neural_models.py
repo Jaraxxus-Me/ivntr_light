@@ -706,6 +706,10 @@ def create_quantified_predicate(
             for quant_obj in quantified_objects:
                 # Insert quantified object at the correct position
                 full_grounding = list(reduced_objects)
+                if quant_obj in full_grounding:
+                    # Avoid duplicate objects in the same grounding
+                    # (Do not quantify self)
+                    continue
                 full_grounding.insert(local_variable_id, quant_obj)
                 all_expanded_groundings.append(full_grounding)
                 expanded_indices_for_this_grounding.append(

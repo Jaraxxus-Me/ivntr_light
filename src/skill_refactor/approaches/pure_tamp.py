@@ -1,7 +1,7 @@
 """Pure TAMP approach without any RL skills."""
 
 import logging
-from typing import Any, List
+from typing import Any, List, Optional
 
 import torch
 from mani_skill.vector.wrappers.gymnasium import ManiSkillVectorEnv  # type: ignore
@@ -22,6 +22,7 @@ class PureTAMPApproach(BaseApproach):
         self,
         system: BaseRLTAMPSystem,
         seed: int,
+        planner: Optional[TaskThenMotionPlanner] = None,
     ) -> None:
         """Initialize approach."""
         super().__init__(system, seed)
@@ -31,18 +32,22 @@ class PureTAMPApproach(BaseApproach):
         )
 
         # Create planner using environment's components
-        self.planner = TaskThenMotionPlanner(
-            types=system.types,
-            predicates=system.predicates,
-            perceiver=system.perceiver,
-            operators=system.operators,
-            skills=system.skills,
-            fallback_action=fall_back_action,
-            normalize_action=normalize_action,
-            arm_action_low=arm_action_low,
-            arm_action_high=arm_action_high,
-            planner_id="pyperplan",
-        )
+        if planner is not None:
+            self.planner = planner
+            logging.info("Using provided TaskThenMotionPlanner instance.")
+        else:
+            self.planner = TaskThenMotionPlanner(
+                types=system.types,
+                predicates=system.predicates,
+                perceiver=system.perceiver,
+                operators=system.operators,
+                skills=system.skills,
+                fallback_action=fall_back_action,
+                normalize_action=normalize_action,
+                arm_action_low=arm_action_low,
+                arm_action_high=arm_action_high,
+                planner_id="pyperplan",
+            )
 
     def reset(self, obs: Tensor, info: dict[str, Any]) -> ApproachStepResult:
         """Reset approach with initial observation."""
