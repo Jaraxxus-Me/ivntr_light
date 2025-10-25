@@ -8,8 +8,8 @@ predicates:
         ae_var_ids: [0]
     nn_archi: 
       type: "MLP"
-      input_dim: 10
-      layer_size: 128
+      input_dim: 8
+      layer_size: 64
       initializer: "xavier"
     optimizer:
       type: "AdamW"

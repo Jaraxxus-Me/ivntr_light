@@ -8,7 +8,8 @@ also homogeneous, i.e., the same skill is executed in all environments at all ti
 """
 
 import abc
-from typing import Any, List, Tuple, cast
+from typing import Any, List, Tuple, cast, Set
+import copy
 
 import torch
 from numpy.typing import NDArray
@@ -54,14 +55,14 @@ class TaskThenMotionPlanner(abc.ABC):
         domain_name: str = "ttmp-domain",
     ) -> None:
         self._types = types
-        self._predicates = predicates
-        self._perceiver = perceiver
-        self._operators = operators
-        self._skills = skills
+        self.predicates = predicates
+        self.perceiver = perceiver
+        self.operators = operators
+        self.skills = skills
         self._planner_id = planner_id
         self._domain_name = domain_name
         self._domain = PDDLDomain(
-            self._domain_name, self._operators, self._predicates, self._types
+            self._domain_name, self.operators, self.predicates, self._types
         )
         self._current_problem: PDDLProblem | None = None
         self._current_task_plan: list[GroundOperator] = []
@@ -79,7 +80,7 @@ class TaskThenMotionPlanner(abc.ABC):
         """Reset on a new task instance."""
         # We commit to the first environment for planning.
         # This is a limitation of the current implementation.
-        objects, atoms, goal = self._perceiver.reset(obs[0:1], info)
+        objects, atoms, goal = self.perceiver.reset(obs[0:1], info)
         self._current_problem = PDDLProblem(
             self._domain_name, self._domain_name, objects, atoms, goal
         )
@@ -119,7 +120,7 @@ class TaskThenMotionPlanner(abc.ABC):
             terminate_mask = self._current_skill.terminate(obs)
             terminate_mask &= ~self._skill_reached_effects
             terminate_obs = obs[terminate_mask]
-            terminate_atoms = self._perceiver.step(terminate_obs)
+            terminate_atoms = self.perceiver.step(terminate_obs)
 
             # new, assuming atoms: List[Set[GroundAtom]]
             assert self._current_operator is not None
@@ -195,8 +196,23 @@ class TaskThenMotionPlanner(abc.ABC):
         return skill_action, self._current_operator
 
     def _get_skill_for_operator(self, operator: GroundOperator) -> LiftedOperatorSkill:
-        applicable_skills = [s for s in self._skills if s.can_execute(operator)]
+        applicable_skills = [s for s in self.skills if s.can_execute(operator)]
         if not applicable_skills:
             raise TaskThenMotionPlanningFailure("No skill can execute operator")
         assert len(applicable_skills) == 1, "Multiple operators per skill not supported"
         return applicable_skills[0]
+
+    def update_domain(
+        self,
+        new_operators: Set[LiftedOperator],
+        new_skills: Set[LiftedOperatorSkill],
+    ) -> None:
+        """Update the current domain with new operators and skills."""
+        self.operators = copy.deepcopy(new_operators)
+        self.skills = copy.deepcopy(new_skills)
+        self._domain = PDDLDomain(
+            f"Domain_Scenario_{self.curr_learning_phase}",
+            self.operators,  # type: ignore[arg-type]
+            self.perceiver.predicates_container.as_set(),
+            self._types,
+        )

@@ -403,7 +403,7 @@ def test_simplified_training_pipeline():
     print("✓ Model produces valid predictions after training")
 
 
-@pytest.mark.skip(reason="The script is used to run experiments locally")
+# @pytest.mark.skip(reason="The script is used to run experiments locally")
 def test_fixed_predicate_invention_blocked_stacking_middle():
     """Test the entire predicate invention process in Blocked Stacking environment."""
     test_config = {
@@ -432,17 +432,23 @@ def test_fixed_predicate_invention_blocked_stacking_middle():
     tamp_system = BlockedStackingRLTAMPSystem.create_default(
         render_mode="rgb_array", seed=42
     )
+    given_predicate_names = ["On"]
+    given_predicate_set = set()
+    for pred in list(tamp_system.predicates):
+        if pred.name in given_predicate_names:
+            given_predicate_set.add(pred)
     with open(CFG.predicate_config, "rb") as f:
         config_data = yaml.safe_load(f)
     predicate_configures = config_data["predicates"]
 
-    dataset_path = Path("training_data/scenario_0")
+    dataset_path = Path("training_data/scenario_1")
     planner_dataset = PlannerDataset.load(dataset_path, num_traj=-1)
 
     topdown_learner = TopDownPredicateLearner(
         dataset=planner_dataset,
         tamp_system=tamp_system,
         predicate_configures=predicate_configures,
+        given_predicates=given_predicate_set,
         verbose=True,
     )
 
