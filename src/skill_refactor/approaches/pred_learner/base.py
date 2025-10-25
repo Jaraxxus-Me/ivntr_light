@@ -42,6 +42,7 @@ class BasePredicateLearner(abc.ABC):
         self,
         dataset: PlannerDataset,
         tamp_system: BaseRLTAMPSystem,
+        given_predicates: Set[Predicate],
         predicate_configures: List[Dict],
         verbose: bool = True,
     ):
@@ -52,6 +53,11 @@ class BasePredicateLearner(abc.ABC):
         self._trajectories = dataset.trajectories
         self._tamp_system = tamp_system
         self.perceiver = copy.deepcopy(self._tamp_system.perceiver)
+        all_predicate_interp = copy.deepcopy(self.perceiver.predicate_interpreters)
+        # Delete all predicates that are not given
+        for pred in list(all_predicate_interp.keys()):
+            if pred not in given_predicates:
+                self.perceiver.delete_predicate_interpreter(pred)
         (
             self._ground_atom_dataset,
             self._train_tasks,
@@ -61,12 +67,6 @@ class BasePredicateLearner(abc.ABC):
         # Learned state
         self.learned_predicates: Set[Predicate] = set()
         self.learning_metrics: Dict[str, Any] = {}
-
-        # Check if new op exists
-        data_op = dataset.get_appearing_operators()
-        tamp_op = self._tamp_system.operators
-        if len(list(tamp_op)) == len(list(data_op)):
-            logging.info("The dataset does not contain any new operators")
 
         # Make directories for saving trained models
         pred_net_dir = Path(CFG.pred_net_save_dir)

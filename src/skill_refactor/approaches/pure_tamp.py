@@ -107,7 +107,7 @@ class PureTAMPApproach(BaseApproach):
 
                 if colliding:
                     logging.info(
-                        f"Episode {episode + 1} had collisions at step {step_count} without RL policy."
+                        f"Episode {episode + 1} had collisions at step {step_count}."
                     )
                     break
 

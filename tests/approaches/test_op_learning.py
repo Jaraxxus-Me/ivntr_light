@@ -50,15 +50,12 @@ def _collect_blocked_stacking_test_data(save_path: Path, num_episodes: int = 3) 
 def test_op_learning_blocked_stacking() -> None:
     """Test Operator learning in BlockedStacking environment."""
     # Setup temporary test data directories
-    dataset_path1 = Path("/tmp/test_op_learning_bstacking_1")
-    dataset_path2 = Path("/tmp/test_op_learning_bstacking_2")
+    dataset_path = Path("/tmp/test_op_learning_bstacking_1")
 
     try:
         # Collect test data (3 trajectories each)
         print("Collecting first dataset...")
-        _collect_blocked_stacking_test_data(dataset_path1, num_episodes=3)
-        print("Collecting second dataset...")
-        _collect_blocked_stacking_test_data(dataset_path2, num_episodes=3)
+        _collect_blocked_stacking_test_data(dataset_path, num_episodes=3)
 
         test_config = {
             "traj_segmenter": "operator_changes",
@@ -69,9 +66,7 @@ def test_op_learning_blocked_stacking() -> None:
         tamp_system = BlockedStackingRLTAMPSystem.create_default(  # type: ignore[name-defined]
             render_mode="rgb_array", seed=42
         )
-        planner_dataset1 = PlannerDataset.load(dataset_path1)
-        planner_dataset2 = PlannerDataset.load(dataset_path2)
-        planner_dataset = planner_dataset1.merge(planner_dataset2)
+        planner_dataset = PlannerDataset.load(dataset_path)
 
         assert (
             len(planner_dataset.trajectories) > 0
@@ -162,10 +157,10 @@ def test_op_learning_blocked_stacking() -> None:
         print(f"✓ Successfully bound {len(binded_skills)} skills to operators")
         assert len(binded_skills) > 0, "Should be able to bind at least one skill"
 
-        print(f"✓ Test completed successfully. Operators learned: {len(operators)}")
+        print(f"✓ Test completed successfully. Operators learned: {operators}")
 
     finally:
         # Cleanup: Remove temporary test data
-        for path in [dataset_path1, dataset_path2]:
+        for path in [dataset_path]:
             if path.exists():
                 shutil.rmtree(path)

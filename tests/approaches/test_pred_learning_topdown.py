@@ -44,26 +44,21 @@ def _collect_minimal_blocked_stacking_test_data(save_path: Path) -> None:
     test_config = {
         "num_envs": 1,  # Minimal for quick collection
         "debug_env": False,
-        "max_rl_steps": 10,
-        "rl_static_steps": 1,
         "max_env_steps": 100,
         "num_train_episodes_planner": 3,  # Just 3 trajectories for testing
-        "obstruction_blocking_grasp_prob": 0.0,
-        "obstruction_blocking_stacking_prob": 0.0,
-        "lll_config": "config/lifelong_learning/blocked_stacking_sc1.yaml",
         "control_mode": "pd_joint_delta_pos",
     }
     register_all_environments()
     reset_config(test_config)
 
-    tamp_system = BlockedStackingRLTAMPSystem.create_default(  # type: ignore[name-defined]
+    tamp_system = BlockedStackingRLTAMPSystem.create_default(
         render_mode="rgb_array", seed=42
     )
 
     approach = PureTAMPApproach(tamp_system, seed=42)
 
     # Collect minimal data directly without wrapper
-    train_data = approach.collect_planner_data(tamp_system.env, None)  # type: ignore[attr-defined]
+    train_data = approach.collect_data(tamp_system.env)
     tamp_system.env.close()  # type: ignore
 
     # Save to temporary location
@@ -101,6 +96,11 @@ def test_input_graph_construction():
         tamp_system = BlockedStackingRLTAMPSystem.create_default(
             render_mode="rgb_array", seed=42
         )
+        given_predicate_names = ["On"]
+        given_predicate_set = set()
+        for pred in list(tamp_system.predicates):
+            if pred.name in given_predicate_names:
+                given_predicate_set.add(pred)
 
         # Load dataset (may have 2-3 trajectories depending on planning success)
         planner_dataset = PlannerDataset.load(dataset_path)
@@ -122,6 +122,7 @@ def test_input_graph_construction():
             dataset=test_dataset,
             tamp_system=tamp_system,
             predicate_configures=predicate_configures,
+            given_predicates=given_predicate_set,
             verbose=True,
         )
 
@@ -145,11 +146,6 @@ def test_input_graph_construction():
 
         # Skip protected method call - create empty dataset for testing
         operator_transition_data = []
-
-        # Note: Skipping transition dataset creation test to avoid protected method access
-        print(
-            f"Skipped transition dataset creation (would expect {total_segments} transitions)"
-        )
 
         print(f"Created {len(operator_transition_data)} operator transitions")
 
@@ -412,11 +408,10 @@ def test_fixed_predicate_invention_blocked_stacking_middle():
     """Test the entire predicate invention process in Blocked Stacking environment."""
     test_config = {
         "traj_segmenter": "operator_changes",
-        "predicate_config": "config/predicates/blocked_stacking_confined_enu_sc1.yaml",
-        "log_file": "logs/skill_pred_1012_easier.log",
-        "pred_net_save_dir": "skill_pred_1012_easier_pred_nets",
+        "predicate_config": "config/predicates/blocked_stacking_enu.yaml",
+        "log_file": "top_down_pred_learning.log",
+        "pred_net_save_dir": "top_down_pred_nets",
         "middle_state_method": "naive_init",
-        "num_middle_states": 20,
         "force_skip_pred_learning": False,
         "loglevel": logging.INFO,
     }
@@ -441,12 +436,8 @@ def test_fixed_predicate_invention_blocked_stacking_middle():
         config_data = yaml.safe_load(f)
     predicate_configures = config_data["predicates"]
 
-    dataset_path = Path("training_data/blocked_stacking/Planner_data/scenario_0")
-    planner_dataset1 = PlannerDataset.load(dataset_path, num_traj=-1)
-    dataset_path = Path("training_data/blocked_stacking/Planner_data/scenario_1")
-    planner_dataset = planner_dataset1.merge(
-        PlannerDataset.load(dataset_path, num_traj=-1)
-    )
+    dataset_path = Path("training_data/scenario_0")
+    planner_dataset = PlannerDataset.load(dataset_path, num_traj=-1)
 
     topdown_learner = TopDownPredicateLearner(
         dataset=planner_dataset,
