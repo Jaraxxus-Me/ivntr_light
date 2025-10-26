@@ -22,7 +22,7 @@ predicates:
         gamma: 0.1
     batch_size: 64
     num_epochs: 100
-    val_loss_thresh: 0.05
+    val_loss_thresh: 0.01
     cls_threshold: 0.5
     val_freq: 10
 
@@ -50,7 +50,7 @@ predicates:
     batch_size: 64
     num_epochs: 100
     cls_threshold: 0.5
-    val_loss_thresh: 0.05
+    val_loss_thresh: 0.01
     val_freq: 10
 
   - name: "b_p2"
@@ -77,5 +77,5 @@ predicates:
     batch_size: 64
     num_epochs: 100
     cls_threshold: 0.5
-    val_loss_thresh: 0.05
+    val_loss_thresh: 0.01
     val_freq: 10

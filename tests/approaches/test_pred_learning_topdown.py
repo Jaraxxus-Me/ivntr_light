@@ -403,7 +403,7 @@ def test_simplified_training_pipeline():
     print("✓ Model produces valid predictions after training")
 
 
-# @pytest.mark.skip(reason="The script is used to run experiments locally")
+@pytest.mark.skip(reason="The script is used to run experiments locally")
 def test_fixed_predicate_invention_blocked_stacking_middle():
     """Test the entire predicate invention process in Blocked Stacking environment."""
     test_config = {

@@ -5,7 +5,7 @@ This repo includes:
 
 - A simple Pick-Place `gym` environment (based on [PRBench]())
 - A (batched) Task-then-motion planner that collects trajectories with operator/option annotations.
-- Simple effect-enumeration for predicate discovery on these trajectories.
+- Simple top-down effect-enumeration for predicate discovery on these trajectories.
 - Task-then-motion planning with discovered predicates.
 
 ### :wrench: Installation
@@ -30,8 +30,15 @@ uv pip install -e third-party/prpl-mono/toms-geoms-2d
 ```
 
 ### :microscope: Check Installation
-Run `./run_ci_checks.sh`. It should complete with all green successes.
-Additionally, see `videos` for a simple dynamic2d execution video with given planner :)
+1. Run `./run_ci_checks.sh`. It should complete with all green  successes.
+2. Additionally, see `videos` for a simple dynamic2d execution video with given planner :)
+3. Test pre-trained neural predicates:
+    ```
+    # Download data
+    python3 scripts/download_data.py
+    # Run test
+    pytest -s -v tests/approaches/test_discovered_pred_skills.py::test_loading_learned_predicates_blocked_stacking
+    ```
 
 ### :mag: Guidelines for Understanding
 
@@ -59,8 +66,14 @@ pytest -s -v tests/datasets/test_collect.py
 ```py
 # How to learn operators with given predicates
 pytest -s -v tests/approaches/test_op_learning.py
-# How to learn predicates by enumerating their effects across operators
+# How to learn predicates by enumerating their effects across operators (This takes a long time due to exhaustive enumeration, ~9 hours).
 pytest -s -v tests/approaches/test_pred_learning_topdown.py
-# How to learn predicates by bilevel learning the effects and classifiers (not tested here)
+# How to learn predicates by bilevel learning the effects and classifiers (not tested here, in general should be more efficient).
 pytest -s -v tests/approaches/test_pred_learning_bilevel.py
+```
+
+#### Planning with Discovered Predicates
+```py
+# How to load discovered predicates/operators and bind skills to them.
+pytest -s -v tests/approaches/test_discovered_pred_skills.py
 ```

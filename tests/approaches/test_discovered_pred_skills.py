@@ -7,6 +7,7 @@ import logging
 import types
 from pathlib import Path
 from typing import List
+import imageio.v2 as iio
 
 import torch
 import yaml
@@ -175,15 +176,15 @@ def test_loading_learned_predicates_blocked_stacking():
     # envs = tamp_system.env
     success = []
     for epi in range(0, 10):
-        traj_init_state = torch.stack(
-            [planner_dataset.trajectories[epi].states[0]],
-            dim=0,
-        ).to(envs.device)
+        # traj_init_state = torch.stack(
+        #     [planner_dataset.trajectories[epi].states[0]],
+        #     dim=0,
+        # ).to(envs.device)
 
         # Use training initial states
-        reset_options = {"init_state": traj_init_state}
+        # reset_options = {"init_state": traj_init_state}
         # Use env rnd seed
-        # reset_options = {}
+        reset_options = {}
         obs, info = envs.reset(options=reset_options)
         step_result = approach.reset(obs, info)
         total_reward = torch.tensor(
@@ -206,13 +207,18 @@ def test_loading_learned_predicates_blocked_stacking():
             # else:
             # print(f"Espisode {epi} Step {step}, taking action {step_result.action}")
             obs, _, _, _, info = envs.step(step_result.action)
+            # iio.imwrite(
+            #     video_folder / f"episode_{epi:02d}_step_{step:04d}.png",
+            #     envs.render(),
+            # )
             if info["success"].all() and (not epi_success):
                 epi_success = True
                 success.append(1)
                 logging.info(f"Episode {epi} succeeded at step {step}.")
+                break
             step_result = approach.step(obs, total_reward, False, False, info)
         if not info["success"].all():
             success.append(0)
-            logging.info(f"Episode {epi} failed.")
+            logging.info(f"Episode {epi} failed with max steps.")
     logging.info(f"Success rate: {sum(success) / len(success)}")
     envs.close()
