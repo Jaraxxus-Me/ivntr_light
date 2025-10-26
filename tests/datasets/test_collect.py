@@ -5,12 +5,13 @@ from pathlib import Path
 from typing import List
 
 from skill_refactor import register_all_environments
+from skill_refactor.approaches.pure_tamp import PureTAMPApproach
+from skill_refactor.args import reset_config
 from skill_refactor.benchmarks.blocked_stacking.blocked_stacking import (
     BlockedStackingRLTAMPSystem,
 )
-from skill_refactor.approaches.pure_tamp import PureTAMPApproach
-from skill_refactor.args import reset_config
 from skill_refactor.settings import CFG
+
 
 def test_blocked_stacking_planner_data_collection():
     """Test Data collection in BlockedStacking environment."""
@@ -18,7 +19,7 @@ def test_blocked_stacking_planner_data_collection():
         "num_envs": 1,
         "debug_env": False,
         "max_env_steps": 240,
-        "num_train_episodes_planner": 1, # Change to 200 for actual training
+        "num_train_episodes_planner": 1,  # Change to 200 for actual training
         "log_file": "bstacking_collect1.log",
         "control_mode": "pd_joint_delta_pos",
         "loglevel": logging.INFO,

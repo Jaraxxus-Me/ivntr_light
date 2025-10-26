@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Optional
 
 try:
-    import gdown
+    import gdown  # type: ignore[import-untyped]
 except ImportError:
     print("Error: gdown library not found. Install with: pip install gdown")
     sys.exit(1)

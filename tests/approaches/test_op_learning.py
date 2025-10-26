@@ -7,12 +7,12 @@ import types
 from pathlib import Path
 
 from skill_refactor import register_all_environments
+from skill_refactor.approaches.operator_learner import learn_operator_from_data
+from skill_refactor.approaches.pure_tamp import PureTAMPApproach
+from skill_refactor.args import reset_config
 from skill_refactor.benchmarks.blocked_stacking.blocked_stacking import (
     BlockedStackingRLTAMPSystem,
 )
-from skill_refactor.approaches.pure_tamp import PureTAMPApproach
-from skill_refactor.approaches.operator_learner import learn_operator_from_data
-from skill_refactor.args import reset_config
 from skill_refactor.utils.structs import (
     LiftedOperator,
     LiftedOperatorSkill,
@@ -40,7 +40,7 @@ def _collect_blocked_stacking_test_data(save_path: Path, num_episodes: int = 3) 
 
     # Collect minimal data directly without wrapper
     train_data = approach.collect_data(tamp_system.env)
-    tamp_system.env.close()
+    tamp_system.env.close()  # type: ignore[no-untyped-call]
 
     # Save to temporary location
     save_path.mkdir(parents=True, exist_ok=True)

@@ -215,7 +215,6 @@ class ObjectCentricBlockedStacking2DEnv(
 
         return init_state_dict
 
-
     def _sample_initial_state(self) -> ObjectCentricState:
         """Sample an initial state for the environment."""
         n = self.config.max_initial_state_sampling_attempts
@@ -245,7 +244,7 @@ class ObjectCentricBlockedStacking2DEnv(
                 grasp_block_pose,
                 grasp_block_shape,
                 base_block_pose,
-                base_block_shape
+                base_block_shape,
             )
 
             # Check initial state validity: goal not satisfied and no collisions.
@@ -265,7 +264,7 @@ class ObjectCentricBlockedStacking2DEnv(
         grasp_block_pose: SE2Pose,
         grasp_block_shape: tuple[float, float],
         base_block_pose: SE2Pose,
-        base_block_shape: tuple[float, float]
+        base_block_shape: tuple[float, float],
     ) -> ObjectCentricState:
         # Shallow copy should be okay because the constant objects should not
         # ever change in this method.

@@ -77,7 +77,7 @@ class PureTAMPApproach(BaseApproach):
         self,
         envs: ManiSkillVectorEnv,
     ) -> PlannerDataset:
-        """Collect Planner training data from the environment"""
+        """Collect Planner training data from the environment."""
 
         logging.info("Collecting training data with planner\n")
 
@@ -138,7 +138,7 @@ class PureTAMPApproach(BaseApproach):
             ops_steps = []
             success = False
 
-            for i, (replay_action, replay_op, _) in enumerate(replay_bag):
+            for _, (replay_action, replay_op, _) in enumerate(replay_bag):
                 step_count += 1
                 actions_steps.append(replay_action.clone())
                 ops_steps.append(replay_op)

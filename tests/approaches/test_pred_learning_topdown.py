@@ -1,5 +1,5 @@
-"""Unit Tests for predicate learning in environment, using topdown
-effect supervised neural optimization approach."""
+"""Unit Tests for predicate learning in environment, using topdown effect supervised
+neural optimization approach."""
 
 import logging
 import shutil
@@ -11,7 +11,6 @@ import torch
 import yaml
 
 from skill_refactor import register_all_environments
-from skill_refactor.approaches.pure_tamp import PureTAMPApproach
 from skill_refactor.approaches.operator_learner.segmentation import segment_trajectory
 from skill_refactor.approaches.pred_learner.neural_dataset import (
     create_train_val_dataloaders,
@@ -27,6 +26,7 @@ from skill_refactor.approaches.pred_learner.topdown_learner import (
     OperatorTransition,
     TopDownPredicateLearner,
 )
+from skill_refactor.approaches.pure_tamp import PureTAMPApproach
 from skill_refactor.args import reset_config
 from skill_refactor.benchmarks.base import GraphData
 from skill_refactor.benchmarks.blocked_stacking.blocked_stacking import (

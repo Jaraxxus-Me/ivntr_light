@@ -1,22 +1,22 @@
 """Unit Tests for the Lifelong Refactoring Approach, in Cluttered Table environment."""
 
-import os
-import pytest
 import copy
 import logging
+import os
 import types
 from pathlib import Path
 from typing import List
-import imageio.v2 as iio
 
+import imageio.v2 as iio
+import pytest
 import torch
 import yaml
 
 from skill_refactor import register_all_environments
-from skill_refactor.approaches.pure_tamp import PureTAMPApproach
 from skill_refactor.approaches.pred_learner.topdown_learner import (
     TopDownPredicateLearner,
 )
+from skill_refactor.approaches.pure_tamp import PureTAMPApproach
 from skill_refactor.args import reset_config
 from skill_refactor.benchmarks.blocked_stacking.blocked_stacking import (
     BlockedStackingRLTAMPSystem,
@@ -88,10 +88,10 @@ def test_loading_learned_predicates_blocked_stacking():
 
     planner = TaskThenMotionPlanner(
         types=tamp_system.types,
-        predicates=given_predicate_set, # use partial predicate set
-        perceiver=partial_perceiver, # use partial predicate set
-        operators=set(), # will be updated later
-        skills=set(), # will be updated later
+        predicates=given_predicate_set,  # use partial predicate set
+        perceiver=partial_perceiver,  # use partial predicate set
+        operators=set(),  # will be updated later
+        skills=set(),  # will be updated later
         fallback_action=fall_back_action,
         normalize_action=normalize_action,
         arm_action_low=arm_action_low,
@@ -131,9 +131,7 @@ def test_loading_learned_predicates_blocked_stacking():
         # Case 1, it is from the existing skills
         # initiate a new skill from the existing skill, but with a new operator name
         existing_skill = next(
-            skill
-            for skill in skills
-            if skill.get_operator_name() == operator.name
+            skill for skill in skills if skill.get_operator_name() == operator.name
         )
         new_skill = existing_skill.__class__(
             env=tamp_system.env.unwrapped[0],

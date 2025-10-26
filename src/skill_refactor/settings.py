@@ -79,7 +79,6 @@ class GlobalSettings:
     blocked2d_gripper_finger_width: float = 0.2
     blocked2d_gripper_finger_height: float = 0.06
 
-
     @classmethod
     def get_arg_specific_settings(cls, args: Dict[str, Any]) -> Dict[str, Any]:
         """A workaround for global settings that are derived from the experiment-

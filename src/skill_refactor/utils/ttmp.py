@@ -8,8 +8,8 @@ also homogeneous, i.e., the same skill is executed in all environments at all ti
 """
 
 import abc
-from typing import Any, Tuple, Set
 import copy
+from typing import Any, Set, Tuple
 
 import torch
 from numpy.typing import NDArray
@@ -23,18 +23,18 @@ from torch import Tensor
 
 from skill_refactor.settings import CFG
 from skill_refactor.utils.controllers import get_frozen_action
-from skill_refactor.utils.task_planning import (
-    task_plan_grounding,
-    create_task_planning_heuristic,
-    task_plan,
-)
 from skill_refactor.utils.structs import (
-    Object,
     GroundAtom,
     GroundOperator,
     LiftedOperator,
     LiftedOperatorSkill,
+    Object,
     Perceiver,
+)
+from skill_refactor.utils.task_planning import (
+    create_task_planning_heuristic,
+    task_plan,
+    task_plan_grounding,
 )
 
 
