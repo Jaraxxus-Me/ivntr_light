@@ -3,9 +3,7 @@ ENV NVIDIA_DRIVER_CAPABILITIES=all
 ARG PYTHON_VERSION=3.11
 
 # Install os-level packages
-RUN apt-get update
-RUN apt-get upgrade -y
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     bash-completion \
     build-essential \
     ca-certificates \
@@ -22,7 +20,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     tmux \
     unzip \
     vim \
-    vulkan-utils \
+    vulkan-tools\
     wget \
     xvfb \
     libgtk2.0-dev \
@@ -33,6 +31,8 @@ RUN curl -o ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest
     chmod +x ~/miniconda.sh && \
     ~/miniconda.sh -b -p /opt/conda && \
     rm ~/miniconda.sh && \
+    /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
     /opt/conda/bin/conda init && \
     /opt/conda/bin/conda install -y python="$PYTHON_VERSION" && \
     /opt/conda/bin/conda clean -ya
